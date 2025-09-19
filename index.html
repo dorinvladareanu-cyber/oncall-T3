@@ -30,7 +30,8 @@
   </table>
 
   <script>
-    const API_URL = https://script.google.com/macros/s/AKfycbxOmqLdUKmVe3CMafXIRoTeUwqb0JV_7VBgwH2Uzq9oHNCNvBa18mChzq6_XIG-G8_G/exec
+    const API_URL = https://script.google.com/macros/s/AKfycbwqCTIHGCM3XvZeVuL-knhKy8vUbZ-O8pC33YRtLCmVaXmYTYI2TIynCWFuK99w_J0A/exec
+
 ; 
     const people = ["Alice", "Bob", "Charlie", "Diana", "Ethan", "Fiona"];
 
@@ -103,6 +104,41 @@
     }
 
     loadSchedule();
-  </script>
+  </<script>
+const API_URL = https://script.google.com/macros/s/AKfycbwqCTIHGCM3XvZeVuL-knhKy8vUbZ-O8pC33YRtLCmVaXmYTYI2TIynCWFuK99w_J0A/exec
+; // paste your URL here
+
+async function loadSchedule() {
+  const res = await fetch(API_URL);
+  const data = await res.json();
+  const tbody = document.getElementById('schedule');
+  tbody.innerHTML = "";
+  data.sort((a,b) => a.date.localeCompare(b.date)).forEach(r => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${r.date}</td><td>${r.person}</td>`;
+    tbody.appendChild(row);
+  });
+}
+
+async function addOncall() {
+  const person = document.getElementById('person').value;
+  const date = document.getElementById('date').value;
+
+  if (!date) { alert("Select a date"); return; }
+
+  await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ person, date })
+  });
+
+  document.getElementById('date').value = "";
+  loadSchedule();
+}
+
+// Load schedule on page load
+window.onload = loadSchedule;
+</script>
+>
 </body>
 </html>
