@@ -15,21 +15,25 @@
 <body>
   <h1>On-call Scheduler</h1>
 
-  <label for="person">Select person:</label>
-  <select id="person">
-    <option value="Alice">Alice</option>
-    <option value="Bob">Bob</option>
-    <option value="Charlie">Charlie</option>
-    <option value="Diana">Diana</option>
-    <option value="Edward">Edward</option>
-    <option value="Frank">Frank</option>
-  </select>
+  <!-- Form Section -->
+  <form id="oncall-form">
+    <label for="person">Select person:</label>
+    <select id="person" name="person">
+      <option value="Alice">Alice</option>
+      <option value="Bob">Bob</option>
+      <option value="Charlie">Charlie</option>
+      <option value="Diana">Diana</option>
+      <option value="Edward">Edward</option>
+      <option value="Frank">Frank</option>
+    </select>
 
-  <label for="date">Select date:</label>
-  <input type="date" id="date">
+    <label for="date">Select date:</label>
+    <input type="date" id="date" name="date">
 
-  <button onclick="addOncall()">Add On-call</button>
+    <button type="button" id="add-button">Add On-call</button>
+  </form>
 
+  <!-- Schedule Table -->
   <h2>Schedule</h2>
   <table>
     <thead>
@@ -39,9 +43,9 @@
   </table>
 
   <script>
-    const API_URL = https://script.google.com/macros/s/AKfycbwqCTIHGCM3XvZeVuL-knhKy8vUbZ-O8pC33YRtLCmVaXmYTYI2TIynCWFuK99w_J0A/exec
-; // replace with your Apps Script URL
+    const API_URL = "https://script.google.com/macros/s/AKfycbwqCTIHGCM3XvZeVuL-knhKy8vUbZ-O8pC33YRtLCmVaXmYTYI2TIynCWFuK99w_J0A/exec"; // replace with your Apps Script URL
 
+    // Load schedule from Google Sheets
     async function loadSchedule() {
       try {
         const res = await fetch(API_URL);
@@ -58,6 +62,7 @@
       }
     }
 
+    // Add on-call assignment
     async function addOncall() {
       const person = document.getElementById('person').value;
       const date = document.getElementById('date').value;
@@ -73,6 +78,7 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ person, date })
         });
+
         document.getElementById('date').value = "";
         loadSchedule();
       } catch(err) {
@@ -81,6 +87,10 @@
       }
     }
 
+    // Hook up button
+    document.getElementById('add-button').addEventListener('click', addOncall);
+
+    // Load schedule when page loads
     window.onload = loadSchedule;
   </script>
 </body>
