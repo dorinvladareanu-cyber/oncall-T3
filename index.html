@@ -1,144 +1,87 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>On-Call Scheduler</title>
+  <meta charset="UTF-8">
+  <title>On-call Scheduler</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-    h1 { text-align: center; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #f0f0f0; }
-    input, select, button { margin: 5px; padding: 6px; }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #2c3e50; }
+    label, select, input, button { margin: 8px 0; display: block; }
+    table { border-collapse: collapse; margin-top: 20px; width: 100%; max-width: 500px; }
+    th, td { border: 1px solid #ccc; padding: 8px 12px; text-align: left; }
+    th { background: #f4f4f4; }
   </style>
 </head>
 <body>
-  <h1>On-Call Scheduler</h1>
+  <h1>On-call Scheduler</h1>
 
-  <div>
-    <label>Date: <input type="date" id="dateInput"></label>
-    <label>Person: 
-      <select id="personInput"></select>
-    </label>
-    <button onclick="addOnCall()">Add On-Call</button>
-  </div>
+  <label for="person">Select person:</label>
+  <select id="person">
+    <option value="Alice">Alice</option>
+    <option value="Bob">Bob</option>
+    <option value="Charlie">Charlie</option>
+    <option value="Diana">Diana</option>
+    <option value="Edward">Edward</option>
+    <option value="Frank">Frank</option>
+  </select>
 
+  <label for="date">Select date:</label>
+  <input type="date" id="date">
+
+  <button onclick="addOncall()">Add On-call</button>
+
+  <h2>Schedule</h2>
   <table>
     <thead>
-      <tr><th>Date</th><th>On-Call People</th><th>Actions</th></tr>
+      <tr><th>Date</th><th>Person</th></tr>
     </thead>
     <tbody id="schedule"></tbody>
   </table>
 
   <script>
     const API_URL = https://script.google.com/macros/s/AKfycbwqCTIHGCM3XvZeVuL-knhKy8vUbZ-O8pC33YRtLCmVaXmYTYI2TIynCWFuK99w_J0A/exec
-
-; 
-    const people = ["Alice", "Bob", "Charlie", "Diana", "Ethan", "Fiona"];
-
-    // populate dropdown
-    const personSelect = document.getElementById("personInput");
-    people.forEach(p => {
-      let opt = document.createElement("option");
-      opt.value = p; opt.text = p;
-      personSelect.add(opt);
-    });
+; // replace with your Apps Script URL
 
     async function loadSchedule() {
-      const res = await fetch(API_URL);
-      const data = await res.json();
-      renderSchedule(data);
+      try {
+        const res = await fetch(API_URL);
+        const data = await res.json();
+        const tbody = document.getElementById('schedule');
+        tbody.innerHTML = "";
+        data.sort((a,b) => a.date.localeCompare(b.date)).forEach(r => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${r.date}</td><td>${r.person}</td>`;
+          tbody.appendChild(row);
+        });
+      } catch(err) {
+        console.error("Error loading schedule:", err);
+      }
     }
 
-    async function addOnCall() {
-      const date = document.getElementById("dateInput").value;
-      const person = document.getElementById("personInput").value;
-      if (!date) return alert("Pick a date!");
+    async function addOncall() {
+      const person = document.getElementById('person').value;
+      const date = document.getElementById('date').value;
 
-      // find existing row
-      const res = await fetch(API_URL);
-      let data = await res.json();
-      let entry = data.find(r => r.date === date);
-      let peopleList = entry ? entry.people : [];
-      if (!peopleList.includes(person)) {
-        peopleList.push(person);
+      if (!date) {
+        alert("Select a date");
+        return;
       }
 
-      await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ date, people: peopleList })
-      });
-      loadSchedule();
+      try {
+        await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ person, date })
+        });
+        document.getElementById('date').value = "";
+        loadSchedule();
+      } catch(err) {
+        alert("Error saving assignment");
+        console.error(err);
+      }
     }
 
-    async function swap(date) {
-      const oldPerson = prompt("Who do you want to swap out?");
-      const newPerson = prompt("Who is replacing them?");
-      if (!people.includes(newPerson)) return alert("Invalid person.");
-
-      const res = await fetch(API_URL);
-      let data = await res.json();
-      let entry = data.find(r => r.date === date);
-      if (!entry) return;
-      entry.people = entry.people.map(p => p === oldPerson ? newPerson : p);
-
-      await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ date, people: entry.people })
-      });
-      loadSchedule();
-    }
-
-    function renderSchedule(data) {
-      const tbody = document.getElementById("schedule");
-      tbody.innerHTML = "";
-      data.sort((a,b) => a.date.localeCompare(b.date));
-      data.forEach(r => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${r.date}</td>
-          <td>${r.people.join(", ")}</td>
-          <td><button onclick="swap('${r.date}')">Swap</button></td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
-
-    loadSchedule();
-  </<script>
-const API_URL = https://script.google.com/macros/s/AKfycbwqCTIHGCM3XvZeVuL-knhKy8vUbZ-O8pC33YRtLCmVaXmYTYI2TIynCWFuK99w_J0A/exec
-; // paste your URL here
-
-async function loadSchedule() {
-  const res = await fetch(API_URL);
-  const data = await res.json();
-  const tbody = document.getElementById('schedule');
-  tbody.innerHTML = "";
-  data.sort((a,b) => a.date.localeCompare(b.date)).forEach(r => {
-    const row = document.createElement('tr');
-    row.innerHTML = `<td>${r.date}</td><td>${r.person}</td>`;
-    tbody.appendChild(row);
-  });
-}
-
-async function addOncall() {
-  const person = document.getElementById('person').value;
-  const date = document.getElementById('date').value;
-
-  if (!date) { alert("Select a date"); return; }
-
-  await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ person, date })
-  });
-
-  document.getElementById('date').value = "";
-  loadSchedule();
-}
-
-// Load schedule on page load
-window.onload = loadSchedule;
-</script>
->
+    window.onload = loadSchedule;
+  </script>
 </body>
 </html>
