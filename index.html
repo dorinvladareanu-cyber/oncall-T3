@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>On-Call Scheduler</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+    h1 { text-align: center; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #f0f0f0; }
+    input, select, button { margin: 5px; padding: 6px; }
+  </style>
+</head>
+<body>
+  <h1>On-Call Scheduler</h1>
+
+  <div>
+    <label>Date: <input type="date" id="dateInput"></label>
+    <label>Person: 
+      <select id="personInput"></select>
+    </label>
+    <button onclick="addOnCall()">Add On-Call</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Date</th><th>On-Call People</th><th>Actions</th></tr>
+    </thead>
+    <tbody id="schedule"></tbody>
+  </table>
+
+  <script>
+    const API_URL = https://script.google.com/macros/s/AKfycbxOmqLdUKmVe3CMafXIRoTeUwqb0JV_7VBgwH2Uzq9oHNCNvBa18mChzq6_XIG-G8_G/exec
+; 
+    const people = ["Alice", "Bob", "Charlie", "Diana", "Ethan", "Fiona"];
+
+    // populate dropdown
+    const personSelect = document.getElementById("personInput");
+    people.forEach(p => {
+      let opt = document.createElement("option");
+      opt.value = p; opt.text = p;
+      personSelect.add(opt);
+    });
+
+    async function loadSchedule() {
+      const res = await fetch(API_URL);
+      const data = await res.json();
+      renderSchedule(data);
+    }
+
+    async function addOnCall() {
+      const date = document.getElementById("dateInput").value;
+      const person = document.getElementById("personInput").value;
+      if (!date) return alert("Pick a date!");
+
+      // find existing row
+      const res = await fetch(API_URL);
+      let data = await res.json();
+      let entry = data.find(r => r.date === date);
+      let peopleList = entry ? entry.people : [];
+      if (!peopleList.includes(person)) {
+        peopleList.push(person);
+      }
+
+      await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ date, people: peopleList })
+      });
+      loadSchedule();
+    }
+
+    async function swap(date) {
+      const oldPerson = prompt("Who do you want to swap out?");
+      const newPerson = prompt("Who is replacing them?");
+      if (!people.includes(newPerson)) return alert("Invalid person.");
+
+      const res = await fetch(API_URL);
+      let data = await res.json();
+      let entry = data.find(r => r.date === date);
+      if (!entry) return;
+      entry.people = entry.people.map(p => p === oldPerson ? newPerson : p);
+
+      await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ date, people: entry.people })
+      });
+      loadSchedule();
+    }
+
+    function renderSchedule(data) {
+      const tbody = document.getElementById("schedule");
+      tbody.innerHTML = "";
+      data.sort((a,b) => a.date.localeCompare(b.date));
+      data.forEach(r => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${r.date}</td>
+          <td>${r.people.join(", ")}</td>
+          <td><button onclick="swap('${r.date}')">Swap</button></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    loadSchedule();
+  </script>
+</body>
+</html>
